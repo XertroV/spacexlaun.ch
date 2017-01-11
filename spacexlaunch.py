@@ -60,7 +60,7 @@ def update_forever():
 
 
 update_thread = threading.Thread(target=update_forever)
-#update_thread.start()
+update_thread.start()
 
 
 @app.route("/")

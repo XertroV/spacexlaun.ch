@@ -2,12 +2,16 @@ from flask import Flask, render_template, url_for
 from bs4 import BeautifulSoup
 import requests
 import arrow
+import os
+import threading
+import time
 
 app = Flask(__name__)
 
 
 wiki_page = "https://en.wikipedia.org/wiki/List_of_Falcon_9_and_Falcon_Heavy_launches"
-next_date = "January 14, 2017, 17:54"
+next_date = ""
+update_thread = threading.Thread()
 
 
 def pr(s):
@@ -48,8 +52,15 @@ def refresh_next_date():
             print(next_date)
             break
 
-refresh_next_date()
 
+def update_forever():
+    while True:
+        refresh_next_date()
+        time.sleep(60)
+
+
+update_thread = threading.Thread(target=update_forever)
+update_thread.start()
 
 @app.route("/")
 def spacex_template():
@@ -57,7 +68,8 @@ def spacex_template():
 
 
 if __name__ == "__main__":
-    app.run()
+    port = 5000 if 'PORT' not in os.environ else os.environ['PORT']
+    app.run(port=port)
 
     url_for('static', filename='countdown.min.js')
     url_for('static', filename='moment-countdown.min.js')

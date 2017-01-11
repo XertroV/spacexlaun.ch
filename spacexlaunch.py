@@ -62,14 +62,14 @@ def update_forever():
 update_thread = threading.Thread(target=update_forever)
 update_thread.start()
 
+
 @app.route("/")
 def spacex_template():
     return render_template('index.html', next_date=next_date)
 
 
 if __name__ == "__main__":
-    port = 5000 if 'PORT' not in os.environ else os.environ['PORT']
-    app.run(port=port)
+    app.run(port=int(os.environ.get('PORT', 5000)))
 
     url_for('static', filename='countdown.min.js')
     url_for('static', filename='moment-countdown.min.js')

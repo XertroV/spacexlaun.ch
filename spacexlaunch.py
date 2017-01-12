@@ -70,7 +70,7 @@ def spacex_template():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-    url_for('static', filename='countdown.min.js')
-    url_for('static', filename='moment-countdown.min.js')
+    is_debug = os.environ.get('DEBUG', 'false').lower() == 'true'
+    ip = '127.0.0.1' if is_debug else '0.0.0.0'
+    app.config['TEMPLATES_AUTO_RELOAD'] = is_debug
+    app.run(host=ip, port=int(os.environ.get('PORT', 5000)))

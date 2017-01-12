@@ -5,6 +5,8 @@ import arrow
 import os
 import threading
 import time
+import json
+
 
 app = Flask(__name__)
 
@@ -18,7 +20,7 @@ def pr(s):
     print(repr(s))
 
 
-def refresh_next_date():
+def refresh_next_date_wikipedia():
     global next_date
     html = requests.get(wiki_page).content
     soup = BeautifulSoup(html, 'html.parser')
@@ -27,7 +29,6 @@ def refresh_next_date():
 
     for c in main_content.find_all(['h2', 'table']):
         if c is None: continue
-        #print(repr(c))
         if "Future launches" in c.get_text() and c.name == "h2":
             found_future_launches = True
             continue
@@ -51,15 +52,29 @@ def refresh_next_date():
                 pass
             print(next_date)
             break
-refresh_next_date()
+
+
+def get_next_date_from_launch_library():
+    global next_date
+    launch_data = json.loads(requests.get("https://launchlibrary.net/1.2/launch/Falcon?limit=999").content.decode())['launches']
+
+    now = arrow.utcnow()
+    for l in launch_data:
+        net = arrow.get(l['netstamp'])
+        if net > now:
+            break
+    next_launch = l
+    next_date = net
+    pr(next_date)
 
 
 def update_forever():
     while True:
-        refresh_next_date()
         time.sleep(60)
+        get_next_date_from_launch_library()
 
 
+get_next_date_from_launch_library()
 update_thread = threading.Thread(target=update_forever)
 update_thread.start()
 

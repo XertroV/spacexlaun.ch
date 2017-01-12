@@ -51,6 +51,7 @@ def refresh_next_date():
                 pass
             print(next_date)
             break
+refresh_next_date()
 
 
 def update_forever():

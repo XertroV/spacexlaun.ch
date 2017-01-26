@@ -24,6 +24,7 @@
         <h2>In <span id="in-hours"></span></h2>
         <h2>On <span id="local-launch-time"></span> local time</h2>
         <h3>UTC: <span id="utc-launch-time"></span></h3>
+        <h3><span id="n-soon"></span> launches planned for the next 4 weeks</h3>
         <h4><a href="https://en.wikipedia.org/wiki/List_of_Falcon_9_and_Falcon_Heavy_launches#Future_launches">List of Future launches on Wikipedia</a></h4>
         <h4><a href="https://reddit.com/r/spacex">r/SpaceX <3</a></h4>
         <hr class="m4">
@@ -36,9 +37,11 @@
     $("document").ready(function(){
         var utcTimeString = "{{ next_date }}";
         var utcDate = moment(utcTimeString);
+        var nSoon = "{{ n_soon }}";
 
         $("#local-launch-time").html(utcDate.format("dddd, MMMM Do YYYY, h:mm:ss A"));
         $("#utc-launch-time").html(utcDate.utc().format("YYYY-MM-DD HH:mm Z"));
+        $("#n-soon").html(nSoon);
 
         var countdownId = countdown(
           utcDate,

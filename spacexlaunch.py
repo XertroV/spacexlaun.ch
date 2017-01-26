@@ -13,6 +13,8 @@ app = Flask(__name__)
 
 wiki_page = "https://en.wikipedia.org/wiki/List_of_Falcon_9_and_Falcon_Heavy_launches"
 next_date = ""
+n_in_4_weeks = 0
+shutdown = False
 update_thread = threading.Thread()
 
 
@@ -55,12 +57,15 @@ def refresh_next_date_wikipedia():
 
 
 def get_next_date_from_launch_library():
-    global next_date
+    global next_date, n_in_4_weeks
     launch_data = json.loads(requests.get("https://launchlibrary.net/1.2/launch/Falcon?limit=999").content.decode())['launches']
 
     now = arrow.utcnow()
+    in_4_weeks = now.shift(weeks=+4)
+    n_in_4_weeks = 0
 
     def find_min(now, best_net=None, best_l=None, all_launches=[]):
+        global n_in_4_weeks
         if len(all_launches) == 0:
             return best_net, best_l
         l = all_launches[0]
@@ -69,11 +74,10 @@ def get_next_date_from_launch_library():
         except:
             return find_min(now, best_net, best_l, all_launches[1:])
         if net > now:
-            pr("Launch %s, %s" % (net, now))
+            if net < in_4_weeks:
+                n_in_4_weeks += 1
             if best_net is None or net < best_net:
                 return find_min(now, net, l, all_launches[1:])
-        else:
-            pr(net)
         return find_min(now, best_net, best_l, all_launches[1:])
 
     next_date, next_l = find_min(now, None, None, launch_data)
@@ -81,9 +85,14 @@ def get_next_date_from_launch_library():
 
 
 def update_forever():
-    while True:
-        time.sleep(60)
+    global shutdown
+    while not shutdown:
         get_next_date_from_launch_library()
+        for _ in range(60):
+            if shutdown:
+                break
+            time.sleep(1)
+
 
 
 get_next_date_from_launch_library()
@@ -93,7 +102,7 @@ update_thread.start()
 
 @app.route("/")
 def spacex_template():
-    return render_template('index.html', next_date=next_date)
+    return render_template('index.html', next_date=next_date, n_soon=n_in_4_weeks)
 
 
 if __name__ == "__main__":
@@ -101,3 +110,4 @@ if __name__ == "__main__":
     ip = '127.0.0.1' if is_debug else '0.0.0.0'
     app.config['TEMPLATES_AUTO_RELOAD'] = is_debug
     app.run(host=ip, port=int(os.environ.get('PORT', 5000)))
+    shutdown = True

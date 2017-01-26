@@ -1,3 +1,4 @@
+import dateutil.parser
 from flask import Flask, render_template, url_for
 from bs4 import BeautifulSoup
 import requests
@@ -9,7 +10,6 @@ import json
 
 
 app = Flask(__name__)
-
 
 wiki_page = "https://en.wikipedia.org/wiki/List_of_Falcon_9_and_Falcon_Heavy_launches"
 next_date = ""
@@ -59,12 +59,24 @@ def get_next_date_from_launch_library():
     launch_data = json.loads(requests.get("https://launchlibrary.net/1.2/launch/Falcon?limit=999").content.decode())['launches']
 
     now = arrow.utcnow()
-    for l in launch_data:
-        net = arrow.get(l['netstamp'])
+
+    def find_min(now, best_net=None, best_l=None, all_launches=[]):
+        if len(all_launches) == 0:
+            return best_net, best_l
+        l = all_launches[0]
+        try:
+            net = dateutil.parser.parse(l['isonet'])
+        except:
+            return find_min(now, best_net, best_l, all_launches[1:])
         if net > now:
-            break
-    next_launch = l
-    next_date = net
+            pr("Launch %s, %s" % (net, now))
+            if best_net is None or net < best_net:
+                return find_min(now, net, l, all_launches[1:])
+        else:
+            pr(net)
+        return find_min(now, best_net, best_l, all_launches[1:])
+
+    next_date, next_l = find_min(now, None, None, launch_data)
     pr(next_date)
 
 
